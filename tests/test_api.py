@@ -8,8 +8,8 @@ from app.main import app
 Base.metadata.drop_all(engine); Base.metadata.create_all(engine)
 client=TestClient(app)
 
-def auth():
-    r=client.post('/auth/signup/',json={'email':'a@example.com','password':'Password123'}); return {'Authorization':'Bearer '+r.json()['access_token']}
+def auth(email='a@example.com'):
+    r=client.post('/auth/signup/',json={'email':email,'password':'Password123'}); return {'Authorization':'Bearer '+r.json()['access_token']}
 
 def test_booking_payment_webhook_idempotency():
     h=auth()
@@ -21,6 +21,6 @@ def test_booking_payment_webhook_idempotency():
     assert client.get(f"/bookings/{b['id']}",headers=h).json()['status']=='CONFIRMED'
 
 def test_unauthorized_booking():
-    h=auth(); c=client.get('/centres/').json()[0]; t=client.get('/tests/').json()[0]
+    h=auth('b@example.com'); c=client.get('/centres/').json()[0]; t=client.get('/tests/').json()[0]
     b=client.post('/bookings/',headers=h,json={'test_id':t['id'],'centre_id':c['id'],'appointment_at':'2027-01-01T10:00:00+05:30'}).json()
     r=client.get(f"/bookings/{b['id']}",headers={'Authorization':'Bearer invalid'}); assert r.status_code==401
